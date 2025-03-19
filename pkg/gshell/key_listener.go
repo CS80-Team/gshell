@@ -1,4 +1,4 @@
-package main
+package gshell
 
 import (
 	"strings"
