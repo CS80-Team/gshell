@@ -1,4 +1,4 @@
-package shell
+package main
 
 import (
 	"errors"
@@ -9,8 +9,6 @@ import (
 	"runtime"
 	"sort"
 	"strings"
-
-	"github.com/CS80-Team/Goolean/internal"
 
 	"github.com/chzyer/readline"
 )
@@ -51,7 +49,7 @@ type Shell struct {
 	inputHandler      *InputHandler
 	prompt            string
 	historyFile       string
-	logger            *internal.Logger
+	logger            *Logger
 }
 
 func NewShell(
@@ -61,7 +59,7 @@ func NewShell(
 	errStream io.Writer,
 	prompt string,
 	historyFile string,
-	logger *internal.Logger,
+	logger *Logger,
 ) *Shell {
 	sh := &Shell{
 		commands:    make(map[string]*Command),

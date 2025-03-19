@@ -1,0 +1,12 @@
+*.idea
+*.vscode
+*.env
+*.iml
+*.out
+*.shell_history
+*.log
+
+
+bin
+dataset
+front
