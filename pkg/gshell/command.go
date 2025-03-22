@@ -12,8 +12,8 @@ type Command struct {
 	Usage        string
 	Args         []Argument
 	Aliases      []string
-	Handler      func(s *Shell, args []string) Status
-	ValidateArgs func(args []string) (bool, string)
+	Handler      func(s *Shell, args []string) (Status, error)
+	ValidateArgs func(args []string) (bool, error)
 }
 
 type EarlyCommand struct {
@@ -21,7 +21,7 @@ type EarlyCommand struct {
 	Description string
 	Usage       string
 	Priority    int
-	Handler     func(s *Shell)
+	Handler     func(s *Shell) error
 }
 
 type Argument struct {
@@ -62,8 +62,8 @@ func NewCommand(
 	usage string,
 	args []Argument,
 	aliases []string,
-	handler func(s *Shell, args []string) Status,
-	validator func(args []string) (bool, string),
+	handler func(s *Shell, args []string) (Status, error),
+	validator func(args []string) (bool, error),
 ) *Command {
 	return &Command{
 		Name:         name,
@@ -81,7 +81,7 @@ func NewEarlyCommand(
 	description string,
 	usage string,
 	priority int, // Decide which to be displayed first (lower is first)
-	handler func(s *Shell),
+	handler func(s *Shell) error,
 ) EarlyCommand {
 	return EarlyCommand{
 		Name:        name,

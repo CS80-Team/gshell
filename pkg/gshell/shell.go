@@ -305,11 +305,19 @@ func (sh *Shell) executeCommand(cmdOrAlias string, args []string) Status {
 	if command, ok := sh.findCommandByNameOrAlias(cmdOrAlias); ok {
 		ok, err := command.ValidateArgs(args)
 		if !ok {
-			sh.Error(COMMAND_PREFIX, "Invalid arguments, "+err)
+			sh.Error(COMMAND_PREFIX, "Invalid arguments, "+err.Error())
 			sh.logger.Error(SHELL_PREFIX, fmt.Sprintf("Invalid arguments for command %s: %s", cmdOrAlias, err))
 			return FAIL
 		}
-		return command.Handler(sh, args)
+		stat, err := command.Handler(sh, args)
+
+		if err != nil {
+			sh.Error(COMMAND_PREFIX, err.Error())
+			sh.logger.Error(SHELL_PREFIX, fmt.Sprintf("Error executing command %s: %s", cmdOrAlias, err.Error()))
+			return FAIL
+		}
+
+		return stat
 	}
 
 	sh.logger.Error(SHELL_PREFIX, fmt.Sprintf("Command %s not found\n", cmdOrAlias))

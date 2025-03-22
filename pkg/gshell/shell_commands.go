@@ -1,6 +1,7 @@
 package gshell
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -15,11 +16,11 @@ func (sh *Shell) registerBuiltInCommands() {
 			"exit",
 			[]Argument{},
 			[]string{},
-			func(s *Shell, args []string) Status {
-				return EXIT
+			func(s *Shell, args []string) (Status, error) {
+				return EXIT, nil
 			},
-			func(args []string) (bool, string) {
-				return true, ""
+			func(args []string) (bool, error) {
+				return true, nil
 			},
 		),
 	)
@@ -31,7 +32,7 @@ func (sh *Shell) registerBuiltInCommands() {
 			"help",
 			[]Argument{},
 			[]string{},
-			func(s *Shell, args []string) Status {
+			func(s *Shell, args []string) (Status, error) {
 				for _, cmd := range sh.GetCommands() {
 					sh.WriteColored(COLOR_YELLOW, cmd.Name+": ")
 					sh.Write(cmd.Description + "\n")
@@ -43,10 +44,10 @@ func (sh *Shell) registerBuiltInCommands() {
 					}
 					sh.WriteColored(COLOR_CYAN, "    Usage: "+cmd.Usage+"\n\n")
 				}
-				return OK
+				return OK, nil
 			},
-			func(args []string) (bool, string) {
-				return true, ""
+			func(args []string) (bool, error) {
+				return true, nil
 			},
 		),
 	)
@@ -58,12 +59,12 @@ func (sh *Shell) registerBuiltInCommands() {
 			"clear",
 			[]Argument{},
 			[]string{"cls"},
-			func(s *Shell, args []string) Status {
+			func(s *Shell, args []string) (Status, error) {
 				s.clearScreen()
-				return OK
+				return OK, nil
 			},
-			func(args []string) (bool, string) {
-				return true, ""
+			func(args []string) (bool, error) {
+				return true, nil
 			},
 		),
 	)
@@ -75,18 +76,17 @@ func (sh *Shell) registerBuiltInCommands() {
 			"history",
 			[]Argument{},
 			[]string{"hist"},
-			func(s *Shell, args []string) Status {
+			func(s *Shell, args []string) (Status, error) {
 				file, err := os.ReadFile(sh.historyFile)
 				if err != nil {
-					sh.Write("Error reading history file: " + err.Error() + "\n")
-					return FAIL
+					return FAIL, fmt.Errorf("error reading history file: %s", err)
 				}
 
 				sh.Write(string(file))
-				return OK
+				return OK, nil
 			},
-			func(args []string) (bool, string) {
-				return true, ""
+			func(args []string) (bool, error) {
+				return true, nil
 			},
 		),
 	)
@@ -113,20 +113,20 @@ func (sh *Shell) registerBuiltInCommands() {
 				},
 			},
 			[]string{},
-			func(s *Shell, args []string) Status {
+			func(s *Shell, args []string) (Status, error) {
 				cmd, _ := sh.findCommandByNameOrAlias(args[1])
 				sh.addAlias(args[0], cmd.Name)
-				return OK
+				return OK, nil
 			},
-			func(args []string) (bool, string) {
+			func(args []string) (bool, error) {
 				if len(args) != 2 {
-					return false, "Invalid number of arguments"
+					return false, fmt.Errorf("invalid number of arguments")
 				}
 
 				if _, ok := sh.findCommandByNameOrAlias(args[1]); !ok {
-					return false, "Command or alias not found"
+					return false, fmt.Errorf("command or alias not found")
 				}
-				return true, ""
+				return true, nil
 			},
 		),
 	)
@@ -146,7 +146,7 @@ func (sh *Shell) registerBuiltInCommands() {
 				},
 			},
 			[]string{},
-			func(s *Shell, args []string) Status {
+			func(s *Shell, args []string) (Status, error) {
 				var ar []string
 
 				for i := 0; i < len(args); i++ {
@@ -174,18 +174,17 @@ func (sh *Shell) registerBuiltInCommands() {
 				err := cmd.Run()
 
 				if err != nil {
-					sh.Write("Error executing command: " + err.Error() + "\n")
-					return FAIL
+					return FAIL, fmt.Errorf("error executing command: %s", err)
 				}
 
-				return OK
+				return OK, nil
 			},
-			func(args []string) (bool, string) {
+			func(args []string) (bool, error) {
 				if len(args) < 1 {
-					return false, "No command provided"
+					return false, fmt.Errorf("no command provided")
 				}
 
-				return true, ""
+				return true, nil
 			},
 		),
 	)
@@ -205,11 +204,10 @@ func (sh *Shell) registerBuiltInCommands() {
 				},
 			},
 			[]string{},
-			func(s *Shell, args []string) Status {
+			func(s *Shell, args []string) (Status, error) {
 				file, err := os.ReadFile(args[0])
 				if err != nil {
-					sh.Write("Error reading script file: " + err.Error() + "\n")
-					return FAIL
+					return FAIL, fmt.Errorf("error reading script file: %s", err)
 				}
 
 				lines := strings.Split(string(file), "\n")
@@ -217,20 +215,20 @@ func (sh *Shell) registerBuiltInCommands() {
 					sh.execute(&line)
 				}
 
-				return OK
+				return OK, nil
 			},
-			func(args []string) (bool, string) {
+			func(args []string) (bool, error) {
 				if len(args) != 1 {
-					return false, "Invalid number of arguments"
+					return false, fmt.Errorf("invalid number of arguments")
 				}
 
 				if info, err := os.Stat(args[0]); os.IsNotExist(err) {
-					return false, "File not found"
+					return false, fmt.Errorf("file does not exist")
 				} else if info.IsDir() || filepath.Ext(args[0]) != ".shell" {
-					return false, "Invalid file type"
+					return false, fmt.Errorf("invalid file type")
 				}
 
-				return true, ""
+				return true, nil
 			},
 		),
 	)
