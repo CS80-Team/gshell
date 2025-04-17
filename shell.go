@@ -49,9 +49,10 @@ type Shell struct {
 	prompt            string
 	historyFile       string
 	logger            *Logger
+	exitFunc          func()
 }
 
-func New(prompt string, historyFile string, logger *Logger) *Shell {
+func New(prompt string, historyFile string, logger *Logger, exitFunc func()) *Shell {
 	return NewConfigShell(
 		readline.Stdin,
 		readline.Stdout,
@@ -59,6 +60,7 @@ func New(prompt string, historyFile string, logger *Logger) *Shell {
 		SHELL_PROMPT,
 		"~/.gshell_history",
 		NewLogger("gshell.log"),
+		exitFunc,
 	)
 }
 
@@ -69,6 +71,7 @@ func NewConfigShell(
 	prompt string,
 	historyFile string,
 	logger *Logger,
+	exitFunc func(),
 ) *Shell {
 	sh := &Shell{
 		commands:    make(map[string]*Command),
@@ -79,6 +82,7 @@ func NewConfigShell(
 		historyFile: historyFile,
 		rootCommand: make(map[string]string),
 		logger:      logger,
+		exitFunc:    exitFunc,
 	}
 
 	listener := &KeyListener{shell: sh}
@@ -188,6 +192,10 @@ func (sh *Shell) Exit() {
 	_ = sh.logger.Close()
 	sh.inputHandler.Close()
 	sh.inStream.Close()
+
+	if sh.exitFunc != nil {
+		sh.exitFunc()
+	}
 }
 
 /*
