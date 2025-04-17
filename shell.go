@@ -43,7 +43,6 @@ type Shell struct {
 	rootCommand       map[string]string
 	earlyExecCommands []EarlyCommand
 	inStream          io.ReadCloser
-	inStreamWriter    io.Writer
 	outStream         io.Writer
 	errStream         io.Writer
 	inputHandler      *InputHandler
@@ -52,9 +51,19 @@ type Shell struct {
 	logger            *Logger
 }
 
-func NewShell(
+func New(prompt string, historyFile string, logger *Logger) *Shell {
+	return NewConfigShell(
+		readline.Stdin,
+		readline.Stdout,
+		readline.Stderr,
+		SHELL_PROMPT,
+		"~/.gshell_history",
+		NewLogger("gshell.log"),
+	)
+}
+
+func NewConfigShell(
 	istream io.ReadCloser,
-	inStreamWriter io.Writer,
 	ostream io.Writer,
 	errStream io.Writer,
 	prompt string,
@@ -65,6 +74,7 @@ func NewShell(
 		commands:    make(map[string]*Command),
 		inStream:    istream,
 		outStream:   ostream,
+		errStream:   errStream,
 		prompt:      prompt,
 		historyFile: historyFile,
 		rootCommand: make(map[string]string),
@@ -77,7 +87,6 @@ func NewShell(
 		historyFile,
 		listener,
 		istream,
-		inStreamWriter,
 		ostream,
 		ostream,
 	)
@@ -109,22 +118,6 @@ func (sh *Shell) GetCommands() []*Command {
 		cmds = append(cmds, cmd)
 	}
 	return cmds
-}
-
-func (sh *Shell) SetInputStream(in io.ReadCloser) {
-	sh.inStream = in
-}
-
-func (sh *Shell) SetInputStreamWriter(in io.Writer) {
-	sh.inStreamWriter = in
-}
-
-func (sh *Shell) SetOutputStream(out io.Writer) {
-	sh.outStream = out
-}
-
-func (sh *Shell) SetErrorStream(err io.Writer) {
-	sh.errStream = err
 }
 
 func (sh *Shell) Error(prefix, err string) {

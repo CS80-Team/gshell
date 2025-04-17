@@ -49,5 +49,6 @@ func isTerminal(w io.Writer) bool {
 	if f, ok := w.(*os.File); ok {
 		return term.IsTerminal(int(f.Fd()))
 	}
-	return false
+
+	return w != nil && w != os.Stdout && w != os.Stderr
 }

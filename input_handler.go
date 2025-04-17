@@ -18,7 +18,6 @@ func NewInputHandler(
 	historyFile string,
 	listener *KeyListener,
 	stdin io.ReadCloser,
-	stdinWriter io.Writer,
 	stdout io.Writer,
 	stderr io.Writer,
 ) (*InputHandler, error) {
@@ -30,7 +29,6 @@ func NewInputHandler(
 		HistorySearchFold: true,
 		Listener:          listener,
 		Stdin:             stdin,
-		StdinWriter:       stdinWriter,
 		Stdout:            stdout,
 		Stderr:            stderr,
 	}
