@@ -5,7 +5,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"time"
 )
 
 func (sh *Shell) registerBuiltInCommands() {
@@ -226,6 +228,45 @@ func (sh *Shell) registerBuiltInCommands() {
 					return false, fmt.Errorf("file does not exist")
 				} else if info.IsDir() || filepath.Ext(args[0]) != ".shell" {
 					return false, fmt.Errorf("invalid file type")
+				}
+
+				return true, nil
+			},
+		),
+	)
+
+	sh.RegisterCommand(
+		NewCommand(
+			"sleep",
+			"idle the shell for a specified time",
+			"sleep <seconds>",
+			[]Argument{
+				{
+					Name:        "Seconds",
+					Description: "The number of seconds to idle",
+					Required:    true,
+					Type:        "int",
+					Default:     "",
+				},
+			},
+			[]string{},
+			func(s *Shell, args []string) (Status, error) {
+				sec, _ := strconv.Atoi(args[0])
+				time.Sleep(time.Duration(sec) * time.Second)
+				return OK, nil
+			},
+			func(args []string) (bool, error) {
+				if len(args) != 1 {
+					return false, fmt.Errorf("invalid number of arguments")
+				}
+
+				sec, err := strconv.Atoi(args[0])
+				if err != nil {
+					return false, fmt.Errorf("invalid number of seconds: %s", err)
+				}
+
+				if sec < 0 {
+					return false, fmt.Errorf("number of seconds must be positive")
 				}
 
 				return true, nil

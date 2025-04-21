@@ -167,11 +167,6 @@ func (sh *Shell) Run(welcMessage string) {
 
 		input, err := sh.inputHandler.ReadLine()
 		if err != nil {
-			if errors.Is(err, readline.ErrInterrupt) {
-				// TODO: End running command (run the command in a goroutine)
-				continue
-			}
-
 			if errors.Is(err, io.EOF) { // Ctrl+D to exit
 				break
 			}
@@ -310,6 +305,7 @@ func (sh *Shell) executeCommand(cmdOrAlias string, args []string) Status {
 			sh.logger.Error(SHELL_PREFIX, fmt.Sprintf("Invalid arguments for command %s: %s", cmdOrAlias, err))
 			return FAIL
 		}
+
 		stat, err := command.Handler(sh, args)
 
 		if err != nil {
