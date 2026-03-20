@@ -52,47 +52,94 @@ type Shell struct {
 	exitFunc          func()
 }
 
-func New(prompt string, historyFile string, logger *Logger, exitFunc func()) *Shell {
-	return NewConfigShell(
-		readline.Stdin,
-		readline.Stdout,
-		readline.Stderr,
-		SHELL_PROMPT,
-		"~/.gshell_history",
-		NewLogger("gshell.log"),
-		exitFunc,
-	)
+type Option func(*Shell)
+
+// Default to stdin
+func WithInputStream(istream io.ReadCloser) Option {
+	return func(sh *Shell) {
+		sh.inStream = istream
+	}
 }
 
-func NewConfigShell(
-	istream io.ReadCloser,
-	ostream io.Writer,
-	errStream io.Writer,
-	prompt string,
-	historyFile string,
-	logger *Logger,
-	exitFunc func(),
-) *Shell {
+// Default to stdout
+func WithOutputStream(ostream io.Writer) Option {
+	return func(sh *Shell) {
+		sh.outStream = ostream
+	}
+}
+
+// Default to stderr
+func WithErrorStream(errStream io.Writer) Option {
+	return func(sh *Shell) {
+		sh.errStream = errStream
+	}
+}
+
+// Default to ">>> "
+func WithPrompt(prompt string) Option {
+	return func(sh *Shell) {
+		sh.prompt = prompt
+	}
+}
+
+// Default to ~/.gshell_history
+func WithHistoryFile(historyFile string) Option {
+	return func(sh *Shell) {
+		sh.historyFile = historyFile
+	}
+}
+
+// Default to gshell.log
+func WithLogger(logger *Logger) Option {
+	return func(sh *Shell) {
+		sh.logger = logger
+	}
+}
+
+// Default to nil
+func WithExitFunc(exitFunc func()) Option {
+	return func(sh *Shell) {
+		sh.exitFunc = exitFunc
+	}
+}
+
+func New(options ...Option) *Shell {
 	sh := &Shell{
 		commands:    make(map[string]*Command),
-		inStream:    istream,
-		outStream:   ostream,
-		errStream:   errStream,
-		prompt:      prompt,
-		historyFile: historyFile,
 		rootCommand: make(map[string]string),
-		logger:      logger,
-		exitFunc:    exitFunc,
+	}
+
+	for _, option := range options {
+		option(sh)
+	}
+
+	if sh.inStream == nil {
+		sh.inStream = readline.Stdin
+	}
+	if sh.outStream == nil {
+		sh.outStream = readline.Stdout
+	}
+	if sh.errStream == nil {
+		sh.errStream = readline.Stderr
+	}
+	if sh.prompt == "" {
+		sh.prompt = SHELL_PROMPT
+	}
+	if sh.historyFile == "" {
+		sh.historyFile = "~/.gshell_history"
+	}
+	if sh.logger == nil {
+		sh.logger = NewLogger("gshell.log")
 	}
 
 	listener := &KeyListener{shell: sh}
 	inputHandler, err := NewInputHandler(
-		prompt,
-		historyFile,
+		sh.prompt,
+		sh.historyFile,
 		listener,
-		istream,
-		ostream,
-		ostream,
+		sh.inStream,
+		sh.outStream,
+		sh.errStream,
 	)
 
 	if err != nil {
